@@ -1,13 +1,11 @@
-﻿using Game;
+﻿using Colossal.Logging;
+using Game.Prefabs;
+using Game;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
-using Colossal.Logging;
-using Colossal.UI.Binding;
-using BrandSelectorTesting.Extensions;
 using BrandSelectorTesting;
-using Game.Prefabs;
 
 public partial class BrandDataQuery : GameSystemBase
 {
@@ -15,16 +13,13 @@ public partial class BrandDataQuery : GameSystemBase
     private PrefabSystem prefabSystem;
     private EntityQuery prefabQuery;
 
-    // Binding helper to expose the brand names to the UI
-    private ValueBindingHelper<string[]> m_Brands;
-
-    private List<string> brandNames = new List<string>();
+    // Internal list to store brand names
+    private List<string> _brandNames = new List<string>();
 
     protected override void OnCreate()
     {
         base.OnCreate();
         prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
-
         prefabQuery = GetEntityQuery(new EntityQueryDesc()
         {
             All = new ComponentType[]
@@ -32,9 +27,6 @@ public partial class BrandDataQuery : GameSystemBase
                 ComponentType.ReadWrite<BrandData>()
             }
         });
-
-        // Create binding for brand names
-        m_Brands = CreateBinding("AvailableBrands", new string[] { });
         RequireForUpdate(prefabQuery);
     }
 
@@ -48,21 +40,15 @@ public partial class BrandDataQuery : GameSystemBase
                 return;
             }
 
-            brandNames.Clear();  // Clear previous data
+            _brandNames.Clear();  // Clear existing data before fetching new ones
             var entities = prefabQuery.ToEntityArray(Allocator.Temp);
-
             foreach (Entity entity in entities)
             {
                 if (prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase) && prefabBase != null)
                 {
-                    brandNames.Add(prefabBase.name);  // Add brand name to the list
+                    _brandNames.Add(prefabBase.name);
                 }
             }
-
-            entities.Dispose();
-
-            // Update the binding with the current brand names
-            m_Brands.Value = brandNames.ToArray();
         }
         catch (Exception e)
         {
@@ -70,9 +56,9 @@ public partial class BrandDataQuery : GameSystemBase
         }
     }
 
-    // Expose the brand names so the UI can fetch them if necessary
+    // Public method to retrieve brand names
     public List<string> GetBrandNames()
     {
-        return brandNames;
+        return _brandNames;
     }
 }

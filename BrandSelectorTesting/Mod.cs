@@ -47,9 +47,9 @@ namespace BrandSelectorTesting
             updateSystem.World.GetOrCreateSystemManaged<PrefabSystem>();
 
             
-            updateSystem.World.GetOrCreateSystemManaged<BrandBuildingMatcherSystem>();
-            updateSystem.UpdateBefore<BrandBuildingMatcherSystem>(SystemUpdatePhase.PrefabUpdate);
-            updateSystem.UpdateAfter<BrandBuildingMatcherSystem>(SystemUpdatePhase.PrefabReferences);
+            updateSystem.World.GetOrCreateSystemManaged<BrandDataQuery>();
+            updateSystem.UpdateBefore<BrandDataQuery>(SystemUpdatePhase.PrefabUpdate);
+            updateSystem.UpdateAfter<BrandDataQuery>(SystemUpdatePhase.PrefabReferences);
             updateSystem.UpdateAfter<DropdownSystem>(SystemUpdatePhase.UIUpdate);
         }
 
