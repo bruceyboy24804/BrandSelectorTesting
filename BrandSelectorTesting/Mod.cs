@@ -1,4 +1,5 @@
-﻿using BrandSelectorTesting.Systems;
+﻿
+using BrandSelectorTesting.Systems;
 using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
@@ -13,6 +14,7 @@ namespace BrandSelectorTesting
 {
     public class Mod : IMod
     {
+
         public static readonly string Id = "BrandSelectorTesting";
 
         /// <summary>
@@ -44,13 +46,11 @@ namespace BrandSelectorTesting
 
             updateSystem.World.GetOrCreateSystemManaged<PrefabSystem>();
 
-            updateSystem.World.GetOrCreateSystemManaged<BrandDataQuerySystem>();
-            updateSystem.UpdateBefore<BrandDataQuerySystem>(SystemUpdatePhase.PrefabUpdate);
-            updateSystem.UpdateAfter<BrandDataQuerySystem>(SystemUpdatePhase.PrefabReferences);
-            updateSystem.World.GetOrCreateSystemManaged<BrandPrefabQuerySystem>();
-            updateSystem.UpdateBefore<BrandPrefabQuerySystem>(SystemUpdatePhase.PrefabUpdate);
-            updateSystem.UpdateAfter<BrandPrefabQuerySystem>(SystemUpdatePhase.PrefabReferences);
-            updateSystem.UpdateAfter<SelectedInfoPanelCustomDropdownSystem>(SystemUpdatePhase.UIUpdate);
+            
+            updateSystem.World.GetOrCreateSystemManaged<BrandBuildingMatcherSystem>();
+            updateSystem.UpdateBefore<BrandBuildingMatcherSystem>(SystemUpdatePhase.PrefabUpdate);
+            updateSystem.UpdateAfter<BrandBuildingMatcherSystem>(SystemUpdatePhase.PrefabReferences);
+            updateSystem.UpdateAfter<DropdownSystem>(SystemUpdatePhase.UIUpdate);
         }
 
         public void OnDispose()

@@ -1,58 +1,78 @@
-﻿using System.Collections.Generic;
-using Game.Prefabs;
-using Unity.Entities;
+﻿using Game;
+using System;
+using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Entities;
 using Colossal.Logging;
+using Colossal.UI.Binding;
+using BrandSelectorTesting.Extensions;
+using BrandSelectorTesting;
+using Game.Prefabs;
 
-namespace BrandSelectorTesting.Systems
+public partial class BrandDataQuery : GameSystemBase
 {
-    public partial class BrandDataQuerySystem : SystemBase
+    public static ILog log = LogManager.GetLogger($"{nameof(BrandSelectorTesting)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
+    private PrefabSystem prefabSystem;
+    private EntityQuery prefabQuery;
+
+    // Binding helper to expose the brand names to the UI
+    private ValueBindingHelper<string[]> m_Brands;
+
+    private List<string> brandNames = new List<string>();
+
+    protected override void OnCreate()
     {
-        private EntityQuery brandQuery;
-        private PrefabSystem prefabSystem;
+        base.OnCreate();
+        prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
 
-        protected override void OnCreate()
+        prefabQuery = GetEntityQuery(new EntityQueryDesc()
         {
-            base.OnCreate();
-            prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
-
-            // Ensure the system is required for update
-            brandQuery = GetEntityQuery(new EntityQueryDesc()
+            All = new ComponentType[]
             {
-                All = new ComponentType[]
-                {
-            ComponentType.ReadWrite<BrandPrefab>()
-                }
-            });
+                ComponentType.ReadWrite<BrandData>()
+            }
+        });
 
-            RequireForUpdate(brandQuery); // Ensure this system will run if there's relevant data
-        }
+        // Create binding for brand names
+        m_Brands = CreateBinding("AvailableBrands", new string[] { });
+        RequireForUpdate(prefabQuery);
+    }
 
-
-        protected override void OnUpdate()
+    protected override void OnUpdate()
+    {
+        try
         {
-            // Log or process the brand data
-            List<string> brands = GetBrands();
-            Mod.log.Info($"Fetched {brands.Count} brands.");
-        }
-
-        public List<string> GetBrands()
-        {
-            List<string> brandNames = new List<string>();
-
-            // Query all entities that match the BrandPrefab component
-            var brandEntities = brandQuery.ToEntityArray(Allocator.Temp);
-            foreach (var entity in brandEntities)
+            if (prefabSystem == null)
             {
-                if (prefabSystem.TryGetPrefab(entity, out BrandPrefab brandPrefab))
+                Mod.log.Error("Prefab system is null.");
+                return;
+            }
+
+            brandNames.Clear();  // Clear previous data
+            var entities = prefabQuery.ToEntityArray(Allocator.Temp);
+
+            foreach (Entity entity in entities)
+            {
+                if (prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase) && prefabBase != null)
                 {
-                    brandNames.Add(brandPrefab.name); // Add the brand name
+                    brandNames.Add(prefabBase.name);  // Add brand name to the list
                 }
             }
 
-            brandEntities.Dispose();
-            return brandNames;
-        }
+            entities.Dispose();
 
+            // Update the binding with the current brand names
+            m_Brands.Value = brandNames.ToArray();
+        }
+        catch (Exception e)
+        {
+            Mod.log.Error(e);
+        }
+    }
+
+    // Expose the brand names so the UI can fetch them if necessary
+    public List<string> GetBrandNames()
+    {
+        return brandNames;
     }
 }
